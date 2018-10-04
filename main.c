@@ -22,6 +22,17 @@ int Max(int a, int b)
     return a>b ? a:b;
 }
 
+int GetHeight(AVLTree A)
+{
+    if(!A) return 0;
+    return A->Height;
+}
+
+int GetBalance(AVLTree A)
+{
+    return(GetHeight(A->Left) - GetHeight(A->Right));
+}
+
 AVLTree SingleLeftRotation(AVLTree A)
 {
     AVLTree B = A->Left;
@@ -66,9 +77,9 @@ AVLTree Insert(AVLTree T, ElementType X)
     else if(X < T->Data)
     {
         T->Left = Insert(T->Left, X);
-        if(GetHeight(T->Left) - GetHeight(T->Right) == 2)
+        if(GetBalance(T) > 1)
         {
-            if(X < T->Left->Data)
+            if(GetBalance(T->Left) >= 0)
                 T = SingleLeftRotation(T);
             else
                 T = DoubleLeftRightRotation(T);
@@ -77,11 +88,11 @@ AVLTree Insert(AVLTree T, ElementType X)
     else if(X > T->Data)
     {
         T->Right = Insert(T->Right, X);
-        if(GetHeight(T->Right) - GetHeight(T->Left) == 2)
+        if(GetBalance(T) < -1)
         {
-            if(X > T->Right->Data)
+            if(GetBalance(T->Right) <= 0)
                 T = SingleRightRotation(T);
-            else if(X < T->Right->Data)
+            else
                 T = SingleRightLeftRotation(T);
         }
     }
@@ -89,4 +100,63 @@ AVLTree Insert(AVLTree T, ElementType X)
     T->Height = Max(GetHeight(T->Left), GetHeight(T->Right)) + 1;
 
     return T;
+}
+
+AVLTree Delete(AVLTree T, ElementType X)
+{
+    AVLTree tmp;
+    if(!T) return NULL;
+    if(X < T->Data)
+    {
+        T->Left = Delete(T->Left, X);
+        if(GetBalance(T) < -1)
+        {
+            if(GetBalance(T->Right) <= 0)
+                T = SingleRightRotation(T);
+            else
+                T = DoubleRightLeftRotation(T);
+        }
+    }
+    else if(X > T->Data)
+    {
+        T->Right = Delete(T->Right, X);
+        if(GetBalance(T) > 1)
+        {
+            if(GetBalance(T->Left) >= 0)
+                T = SingleLeftRotation(T);
+            else
+                T = SingleLeftRightRotation(T);
+        }
+    }
+    else
+    {
+        if(!T->Left && !T->Right) /* T is a leaf node */
+        {
+            tmp = T;
+            T = NULL;
+            free(tmp);
+        }
+        if(T->Left) /* T has only one left child */
+        {
+            tmp = T->Left;
+            *T = *tmp;
+            free(tmp);
+        }
+        else(T->Right) /* T has only one right child */
+        {
+            tmp = T->Right;
+            *T = *tmp;
+            free(tmp);
+        }
+        else /* T has both left and right children */
+        {
+            tmp = FindMin(T->Right);
+            T->Data = tmp->Data;
+            T->Right = Delete(T->Right, tmp->Data);
+        }
+    }
+
+    if(!T) return NULL;
+    T->Height = Max(GetHeight(T->Left), GetHeight(T->Right)) + 1;
+    Return T;
 }
